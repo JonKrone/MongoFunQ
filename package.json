@@ -1,0 +1,27 @@
+{
+  "name": "mongofunq",
+  "version": "0.0.0",
+  "description": "<!-- > This material was originally posted [here](http://www.quora.com/What-is-Amazons-approach-to-product-development-and-product-management). It is reproduced here for posterities sake.",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha test/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JonKrone/MongoQ.git"
+  },
+  "author": "Jonathan Krone (jkrone@vt.edu)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/JonKrone/MongoQ/issues"
+  },
+  "homepage": "https://github.com/JonKrone/MongoQ#readme",
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "mocha": "^2.4.5"
+  },
+  "dependencies": {
+    "promised-mongo": "^1.2.0",
+    "ramda": "^0.19.1"
+  }
+}
