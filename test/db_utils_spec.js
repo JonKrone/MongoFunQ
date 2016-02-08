@@ -49,7 +49,15 @@ describe('DB utility functions', function() {
       expect( partyNames(characters) ).to.deep.equal(['Dnin', 'Dangah'])
       expect( partyHealth(characters) ).to.equal(104)
     })
+  })
 
+  describe('where', function() {
+    it.only ('should return a list of matched objects', function() {
+      let charName = ram.compose( utils.by('name'), utils.by('profile') )
+      let isDnin = (character) => charName(character) === 'Dnin'
+
+      let dnin = utils.where(isDnin, characters)
+    })
   })
 
 })

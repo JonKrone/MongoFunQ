@@ -24,14 +24,6 @@ var by = function(property, object) {
   return object[property]
 }
 
-      // c_id:    001,
-      // profile: { name: 'Dnin', age: 51, history: 'stringy stringy' },
-      // stats:   { hp: 32, prof: 3, level: 6 },
-      // items:   [ { _id: 0237, name: 'Gold', value: 1, quant: 89 },
-      //            { _id: 0181, name: 'Potion', value: 12, quant: 2 }]
-
-
-
 /*
   search an object array for a property:value match
   return null or the matching object
@@ -42,6 +34,17 @@ var by = function(property, object) {
 
     // ramda pickBy implementation
 */
+var where = function(test, arr) {
+  if (!Array.isArray(arr)) throw new Error('passed non-array to where; just check test against property')
+
+  var result = []
+  for (var obj of arr) {
+    if ( test(obj) ) result.push(obj)
+  }
+
+  return result
+}
+
 
 var trace = function(tag, x) {
   console.log('')
@@ -50,6 +53,7 @@ var trace = function(tag, x) {
 }
 
 
-utils.by = ram.curry(by)
-
+utils.by    = ram.curry(by)
+utils.where = ram.curry(where)
 utils.trace = ram.curry(trace)
+
