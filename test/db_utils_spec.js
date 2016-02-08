@@ -28,22 +28,25 @@ describe('DB utility functions', function() {
     it ('should pluck properties from objects', function() {
       let charName = utils.by('name', Dnin.profile)
 
-      expect(charName).to.deep.equal(['Dnin'])
+      expect(charName).to.deep.equal('Dnin')
     })
 
     it ('should pluck properties from an array of objects', function() {
-      let charNames = utils.by('c_id')(characters)
+      let charNames = ram.map(utils.by('c_id'))(characters)
       expect(charNames).to.deep.equal( [1, 2] )
     })
 
     it ('should compose', function() {
       let characterName = ram.compose(utils.by('name'), utils.by('profile'))
-      let partyHealth = ram.compose(ram.sum, utils.by('hp'), utils.by('stats'))
+      let partyNames = ram.compose(ram.map(characterName))
 
-      expect( characterName(Dangah) ).to.deep.equal(['Dangah'])
-      expect( characterName(Dnin) ).to.deep.equal(['Dnin'])
+      let characterHealth = ram.compose(utils.by('hp'), utils.by('stats'))
+      let partyHealth = ram.compose(ram.sum, ram.map(characterHealth))
 
-      expect( characterName(characters) ).to.deep.equal(['Dnin', 'Dangah'])
+      expect( characterName(Dangah) ).to.deep.equal('Dangah')
+      expect( characterName(Dnin) ).to.deep.equal('Dnin')
+
+      expect( partyNames(characters) ).to.deep.equal(['Dnin', 'Dangah'])
       expect( partyHealth(characters) ).to.equal(104)
     })
 

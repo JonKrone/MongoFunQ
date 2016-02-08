@@ -14,24 +14,14 @@ var utils = module.exports;
 
     // ramda
 */
-var by = function(property, objects) {
+var by = function(property, object) {
   // convert non-array 'property' param to array
-  if (Array.isArray(property)) throw new Error('can not search for multiple properties with by. Use map(by) instead')
-  // Pass along object if we're not looking for anything
-  if (property.length === 0)    return objects
-
-  if (!Array.isArray(objects)) objects = [objects]
-
+  if (Array.isArray(property)) throw new Error('can not search for multiple properties with by. Use map(by) instead!')
+  if (Array.isArray(object)) throw new Error('can not search an array. use map(by) instead!')
   // console.log('\nproperty to pluck:', property)
   // console.log('object to pluck from', objects)
 
-  var result = []
-  for (var obj of objects) {
-    // console.log('')
-    result.push( obj[property] )
-  }
-
-  return result;
+  return object[property]
 }
 
       // c_id:    001,
