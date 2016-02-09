@@ -1,9 +1,6 @@
 "use strict"
 // Here we build the components that we string together to make a query
-
 var ram = require('ramda')
-
-var utils = module.exports;
 
 
 const insert = function(attrs, key, collection) {
@@ -44,14 +41,30 @@ const update = function (prop, value, object) {
 }
 
 /*
+  destructive remove key from collection
+    if array, splice out
+    if object, delete
 
+  remove (key, collection)
+    input:  *, object OR [*]
+    output: * OR null
 
 */
-const remove = function() {
-  // if array, splice out
-  // if object, delete
+const remove = function(key, collection) {
+  if (Array.isArray(collection)) {
+    const idx = collection.indexOf(key)
+    if (idx < 0) return null
+    return collection.splice(idx, 1)[0]
+  }
 
+  if (collection !== null && typeof collection === 'object') {
+    const tmp = collection[key]
+    delete collection[key]
 
+    return collection[key] === undefined ? tmp : null
+  }
+
+  throw new Error('error in remove: collection must be an object or array')
 }
 
 
@@ -114,12 +127,14 @@ const trace = function(tag, x) {
 }
 
 
+const utils = module.exports;
 
 utils.by     = ram.curry(by)
 utils.where  = ram.curry(where)
 
 utils.insert = ram.curry(insert)
 utils.update = ram.curry(update)
+utils.remove = ram.curry(remove)
 
 utils.first  = ram.curry(first)
 utils.trace  = ram.curry(trace)

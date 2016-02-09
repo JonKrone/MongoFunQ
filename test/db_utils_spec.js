@@ -27,12 +27,17 @@ describe('DB utility functions', function() {
   const all         = () => true
   const stats       = util.by('stats')
   const profile     = util.by('profile')
+  const inventory   = util.by('items')
+  const quant       = util.by('quant')
 
   const charName    = ram.compose( util.by('name'), profile )
   const charHP      = ram.compose( util.by('hp'), stats )
 
   const nameMatch   = ram.curry( (name, character) => charName(character) === name )
+  const isItem      = ram.curry( (targetId, item) => item.id === targetId )
+
   const byName      = (name) => util.where(nameMatch(name))
+  const itemById    = (id) => ram.compose( util.first, util.where(isItem(id)) )
 
   const partyNames  = ram.map(charName)
   const partyHealth = ram.compose(ram.sum, ram.map(charHP))
@@ -113,49 +118,26 @@ describe('DB utility functions', function() {
       expect(charHP(charDnin)).to.equal(32 - 6)
     })
 
-    it.only ('should compose well pt. 2', function() {
-      const isItem      = ram.curry( (targetId, item) => item.id === targetId )
-      const inventory   = util.by('items')
-      const quant       = util.by('quant')
-      const updateQuant = util.update('quant')
-
-      const gold        = util.where(isItem(237))
-      const charGold    = ram.compose(util.first, gold, inventory)
+    it ('should compose well pt. 2', function() {
+      let updateQuant = util.update('quant')
+      let charGold    = ram.compose(itemById(237), inventory)
 
       /*
-        There is a powerful abstraction here but I can't figure it out.
+        There is a powerful abstraction here but I haven't pinned it down.
         duplication: charGold(character) :: finding the inventory item we want to update
         update inventory
       */
-      const updateGold  = ram.curry( (loot, character) => {
+      let updateGold  = ram.curry( (loot, character) => {
         let newItem = ram.compose( updateQuant, ram.compose(ram.add(loot), quant, charGold) )(character)
         return newItem(charGold(character))
       })
 
-      const add50Gold   = updateGold(50)
+      let add50Gold   = updateGold(50)
 
-      ram.map(updateGold(50)) (characters)
       // better: ram.map(updateInventory(237, 50)) characters
+      ram.map(add50Gold) (characters)
 
-      console.log('\nDnin after receiving gold:', ram.map(charGold, characters))
-
-
-      // // find the inventory of each character in the party
-      // const party      = util.where(all)(characters)
-      // const inventory  = ram.map(util.by('items'))(party)
-
-      // // create new values for the characters' inventory
-      // const gold       = util.where(isItem(237))
-      // const charGold   = ram.map( ram.compose(util.first, gold), inventory)
-      // const newGold    = ram.map( ram.compose(ram.add(50), util.by('quant')), charGold)
-
-      // const papp_updates = ram.map( util.update('quant'), newGold)
-      // const updated      = ram.zip( papp_updates, charGold)
-
-      // const updateGold = ram.map( (func) => func[0](func[1]), updated)
-
-      // expect(charGold[0]).to.equal(Dnin.items[0]) // verify that util.update mutated the original object
-      // expect(findDnin(characters).items[0].quant).to.equal(139)
+      expect(findDnin(characters).items[0].quant).to.equal(139)
     })
   })
 
@@ -182,11 +164,57 @@ describe('DB utility functions', function() {
 
       expect(dad).to.equal('bilo')
     })
+  })
 
+  describe('remove', function() {
+    it ('should remove a key from an object', function() {
+      let testObj = {a: 1, b:'stringy', c: [{b:2}, 'thingy']}
 
+      expect(util.remove('a', testObj)).to.equal(1)
+      expect(testObj.a).to.equal(undefined)
+    })
+
+    it ('should remove a value from an array', function() {
+      let x = { b: 2 }
+      let testObj = {a: 1, b:'stringy', c: [x, 'thingy']}
+
+      expect(util.remove(x, testObj.c)).to.equal(x)
+      expect(testObj.c.length).to.equal(1)
+    })
+
+    it.only ('should compose well', function() {
+      // let findGold  = ram.compose(itemById(237))
+
+      // works
+      // let stealGold = ram.compose(util.remove, itemById(237))
+      // stealGold(inventory(Dnin)) (inventory(Dnin))
+
+      /*  ideal
+        let stealItem = ram.curry( (itemId, character) => {
+          ram.compose(util.remove, itemById(itemId), inventory) (character)
+
+        stealGold(Dnin)
+      */
+
+      let stealItem = ram.curry( (itemId, character) => {
+        let removeFrom = ram.compose(util.remove, itemById(itemId), inventory)(character)
+        removeFrom( inventory(character) )
+      })
+      stealItem(237, Dnin)
+
+      ram.map(stealItem(237)) (characters)    // Check: does not remove items that are not there
+
+      expect(Dnin.items.length).to.equal(1)
+    })
   })
 
 })
+
+
+
+
+
+
 
 
 
