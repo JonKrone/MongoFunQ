@@ -27,6 +27,7 @@ describe('DB utility functions', function() {
   const all         = () => true
   const stats       = util.by('stats')
   const profile     = util.by('profile')
+
   const charName    = ram.compose( util.by('name'), profile )
   const charHP      = ram.compose( util.by('hp'), stats )
 
@@ -112,17 +113,25 @@ describe('DB utility functions', function() {
       expect(charHP(charDnin)).to.equal(32 - 6)
     })
 
-    it ('should compose well pt. 2', function() {
-      const isItem    = (itemId, item) => item.id === itemId
+    it.only ('should compose well pt. 2', function() {
+      const isItem     = ram.curry( (targetId, item) => item.id === targetId )
 
-      console.log('characters:', characters)
-      const party     = ram.map(util.where(all))(characters)
-      console.log('party:', party)
-      // const inventory = util.by('items')
+      const party      = util.where(all)(characters)
+      const inventory  = ram.map(util.by('items'))(party)
 
-      // const findGold  = util.where(isItem(237), )
-      // const addGold   = util.update('gold')
+      const gold       = util.where(isItem(237))
+      const foundGold  = ram.map(ram.compose( util.first, gold )) (inventory)
 
+      expect(foundGold[0]).to.equal(Dnin.items[0]) // still working with the _same_ object
+
+      // const goldCounts = ram.compose(ram.map((gold)ram.map(util.by('quant')) (foundGold)
+
+        (update('quant'), map(value + newValue)) // leaves us with an update ready to accepts its collections
+
+
+      // ram.map(util.update('quant', newValue, ))
+
+      console.log('findGold:', foundGold)
 
     })
 
