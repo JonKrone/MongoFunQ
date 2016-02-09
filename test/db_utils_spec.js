@@ -29,6 +29,7 @@ describe('DB utility functions', function() {
   const profile     = util.by('profile')
   const inventory   = util.by('items')
   const quant       = util.by('quant')
+  const updateQuant = util.update('quant')
 
   const charName    = ram.compose( util.by('name'), profile )
   const charHP      = ram.compose( util.by('hp'), stats )
@@ -110,29 +111,27 @@ describe('DB utility functions', function() {
     })
 
     it('should work well with other utilities', function() {
-      const charDnin = findDnin(characters)
+      let charDnin = findDnin(characters)
 
-      const deal6  = ram.compose( util.update('hp', charHP(charDnin) - 6), stats)
+      let deal6  = ram.compose( util.update('hp', charHP(charDnin) - 6), stats)
       deal6(charDnin)
 
       expect(charHP(charDnin)).to.equal(32 - 6)
     })
 
     it ('should compose well pt. 2', function() {
-      let updateQuant = util.update('quant')
-      let charGold    = ram.compose(itemById(237), inventory)
-
       /*
         There is a powerful abstraction here but I haven't pinned it down.
         duplication: charGold(character) :: finding the inventory item we want to update
         update inventory
       */
-      let updateGold  = ram.curry( (loot, character) => {
-        let newItem = ram.compose( updateQuant, ram.compose(ram.add(loot), quant, charGold) )(character)
-        return newItem(charGold(character))
+      let updateInv = ram.curry( (itemId, loot, character) => {
+        let newQuant = ram.compose( ram.add(loot), quant, itemById(itemId), inventory)
+        let newItem  = ram.compose( updateQuant, newQuant) (character)
+        return ram.compose( newItem, itemById(itemId), inventory) (character)
       })
 
-      let add50Gold   = updateGold(50)
+      let add50Gold   = updateInv(237, 50)
 
       // better: ram.map(updateInventory(237, 50)) characters
       ram.map(add50Gold) (characters)
@@ -182,27 +181,14 @@ describe('DB utility functions', function() {
       expect(testObj.c.length).to.equal(1)
     })
 
-    it.only ('should compose well', function() {
-      // let findGold  = ram.compose(itemById(237))
-
-      // works
-      // let stealGold = ram.compose(util.remove, itemById(237))
-      // stealGold(inventory(Dnin)) (inventory(Dnin))
-
-      /*  ideal
-        let stealItem = ram.curry( (itemId, character) => {
-          ram.compose(util.remove, itemById(itemId), inventory) (character)
-
-        stealGold(Dnin)
-      */
-
+    it ('should compose well', function() {
       let stealItem = ram.curry( (itemId, character) => {
         let removeFrom = ram.compose(util.remove, itemById(itemId), inventory)(character)
         removeFrom( inventory(character) )
       })
-      stealItem(237, Dnin)
 
-      ram.map(stealItem(237)) (characters)    // Check: does not remove items that are not there
+      let stealGold = stealItem(237)
+      ram.map(stealGold) (characters)    // Check: does not remove items that are not there
 
       expect(Dnin.items.length).to.equal(1)
     })
