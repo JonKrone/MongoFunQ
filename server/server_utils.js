@@ -44,7 +44,20 @@ const update = function (prop, value, object) {
 }
 
 /*
-  return properties of obj in [obj]
+
+
+*/
+const remove = function() {
+  // if array, splice out
+  // if object, delete
+
+
+}
+
+
+
+/*
+  return property of obj
 
   by (property, obj)
     input:   string, object

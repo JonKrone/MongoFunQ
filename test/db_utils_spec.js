@@ -40,7 +40,7 @@ describe('DB utility functions', function() {
   const notDead     = (character) => charHP(character) >= 0
   const aliveOnes   = util.where(notDead, characters)
 
-  const findDnin    = byName('Dnin')
+  const findDnin    = ram.compose( util.first, byName('Dnin'))
 
   describe('by', function() {
     /*
@@ -74,7 +74,7 @@ describe('DB utility functions', function() {
 
   describe('where', function() {
     it ('should return a list of matched objects', function() {
-      expect(findDnin(characters)).to.deep.equal([Dnin])
+      expect(findDnin(characters)).to.deep.equal(Dnin)
     })
 
     it ('should include all truthy test results', function() {
@@ -105,39 +105,48 @@ describe('DB utility functions', function() {
     })
 
     it('should work well with other utilities', function() {
-      const charDnin = findDnin(characters)[0]
+      const charDnin = findDnin(characters)
 
-      const dealDmg = ram.compose( util.update('hp', charHP(charDnin) - 6), stats)
+      const dealDmg  = ram.compose( util.update('hp', charHP(charDnin) - 6), stats)
       dealDmg(charDnin)
 
       expect(charHP(charDnin)).to.equal(32 - 6)
     })
 
-    it.only ('should compose well pt. 2', function() {
+    it ('should compose well pt. 2', function() {
       const isItem     = ram.curry( (targetId, item) => item.id === targetId )
-
-      const party      = util.where(all)(characters)
-      const inventory  = ram.map(util.by('items'))(party)
+      const inventory  = util.by('items')
 
       const gold       = util.where(isItem(237))
-      const foundGold  = ram.map(ram.compose( util.first, gold )) (inventory)
+      const charGold   = ram.compose(util.first, gold, inventory)
 
-      expect(foundGold[0]).to.equal(Dnin.items[0]) // still working with the _same_ object
+      const updateItemQuant = (change) => ram.compose( ram.add(change), util.by('quant'))
 
-      // const goldCounts = ram.compose(ram.map((gold)ram.map(util.by('quant')) (foundGold)
+      const newGold = updateItemQuant(50) (charGold(Dnin))
+      console.log('Dnins new gold:', newGold)
 
-        (update('quant'), map(value + newValue)) // leaves us with an update ready to accepts its collections
+      util.update('quant', newGold, charGold(Dnin))
+
+      console.log('Dnin after receiving gold:', Dnin)
 
 
-      // ram.map(util.update('quant', newValue, ))
+      // // find the inventory of each character in the party
+      // const party      = util.where(all)(characters)
+      // const inventory  = ram.map(util.by('items'))(party)
 
-      console.log('findGold:', foundGold)
+      // // create new values for the characters' inventory
+      // const gold       = util.where(isItem(237))
+      // const charGold   = ram.map( ram.compose(util.first, gold), inventory)
+      // const newGold    = ram.map( ram.compose(ram.add(50), util.by('quant')), charGold)
 
+      // const papp_updates = ram.map( util.update('quant'), newGold)
+      // const updated      = ram.zip( papp_updates, charGold)
+
+      // const updateGold = ram.map( (func) => func[0](func[1]), updated)
+
+      // expect(charGold[0]).to.equal(Dnin.items[0]) // verify that util.update mutated the original object
+      // expect(findDnin(characters).items[0].quant).to.equal(139)
     })
-
-    // it ('should compose', function() {
-    //   // let givePartyGold = update, charactersInParty
-    // })
   })
 
   describe('insert', function() {
