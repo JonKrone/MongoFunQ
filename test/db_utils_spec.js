@@ -107,27 +107,37 @@ describe('DB utility functions', function() {
     it('should work well with other utilities', function() {
       const charDnin = findDnin(characters)
 
-      const dealDmg  = ram.compose( util.update('hp', charHP(charDnin) - 6), stats)
-      dealDmg(charDnin)
+      const deal6  = ram.compose( util.update('hp', charHP(charDnin) - 6), stats)
+      deal6(charDnin)
 
       expect(charHP(charDnin)).to.equal(32 - 6)
     })
 
-    it ('should compose well pt. 2', function() {
-      const isItem     = ram.curry( (targetId, item) => item.id === targetId )
-      const inventory  = util.by('items')
+    it.only ('should compose well pt. 2', function() {
+      const isItem      = ram.curry( (targetId, item) => item.id === targetId )
+      const inventory   = util.by('items')
+      const quant       = util.by('quant')
+      const updateQuant = util.update('quant')
 
-      const gold       = util.where(isItem(237))
-      const charGold   = ram.compose(util.first, gold, inventory)
+      const gold        = util.where(isItem(237))
+      const charGold    = ram.compose(util.first, gold, inventory)
 
-      const updateItemQuant = (change) => ram.compose( ram.add(change), util.by('quant'))
+      /*
+        There is a powerful abstraction here but I can't figure it out.
+        duplication: charGold(character) :: finding the inventory item we want to update
+        update inventory
+      */
+      const updateGold  = ram.curry( (loot, character) => {
+        let newItem = ram.compose( updateQuant, ram.compose(ram.add(loot), quant, charGold) )(character)
+        return newItem(charGold(character))
+      })
 
-      const newGold = updateItemQuant(50) (charGold(Dnin))
-      console.log('Dnins new gold:', newGold)
+      const add50Gold   = updateGold(50)
 
-      util.update('quant', newGold, charGold(Dnin))
+      ram.map(updateGold(50)) (characters)
+      // better: ram.map(updateInventory(237, 50)) characters
 
-      console.log('Dnin after receiving gold:', Dnin)
+      console.log('\nDnin after receiving gold:', ram.map(charGold, characters))
 
 
       // // find the inventory of each character in the party
