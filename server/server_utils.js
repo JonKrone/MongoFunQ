@@ -5,27 +5,50 @@ var ram = require('ramda')
 
 var utils = module.exports;
 
+
+const insert = function(attrs, key, collection) {
+  if (key && collection !== null && typeof collection === 'object') {
+    // WHAT DO IF OBJ PROPERTY EXISTS?
+    collection[key] = attrs
+    return collection
+  }
+
+  if (!Array.isArray(collection))
+    throw new Error("error in insert: collection must be an object or array")
+
+  collection.push(attrs)
+  return collection
+}
+
 /*
   mapBy ([props], collection)
     maps 'by' with each property over the collection
     same as whitelisting?
 */
 
-const update = function (prop, value, collection) {
-  if (collection === null && typeof colelction !== 'object')
+
+/*
+  destructive update to an object
+
+  update (prop, value, collection)
+    input:   string, *, object
+    output:  object
+*/
+const update = function (prop, value, object) {
+  if (object === null && typeof object !== 'object')
     throw new Error('error in update: can not update non-object types.')
 
-  collection[prop] = value
+  object[prop] = value
 
-  return collection
+  return object
 }
 
 /*
   return properties of obj in [obj]
 
   by (property, obj)
-    input:   obj
-    output:  obj
+    input:   string, object
+    output:  object
 
     // ramda
 */
@@ -42,23 +65,29 @@ const by = function(property, object) {
   filter: search an object array for a property:value match
   return null or the matching object
 
-  of (property, value)
-    input: [obj]
-    out:    obj
+  of (predicate, arr)
+    input:  function, [object]
+    out:    object
 
     // ramda pickBy implementation
 */
-const where = function(test, arr) {
-  if (!Array.isArray(arr))
+const where = function(test, collection) {
+  if (!Array.isArray(collection))
     throw new Error('error in where: passed non-array to where; just check test against property')
   if (typeof test !== 'function')
     throw new Error("error in where: can not evaluate a non-function test; pass identity if that's what you're looking for")
 
   let result = []
-  for (let obj of arr) {
+  for (let obj of collection) {
     if ( test(obj) ) result.push(obj)
   }
   return result
+}
+
+const first = function(collection) {
+  if (!Array.isArray(collection))
+    throw new Error('error in first: must pass an array')
+  return collection[0]
 }
 
 /*
@@ -72,8 +101,14 @@ const trace = function(tag, x) {
 }
 
 
+
 utils.by     = ram.curry(by)
 utils.where  = ram.curry(where)
+
+utils.insert = ram.curry(insert)
 utils.update = ram.curry(update)
+
+utils.first  = ram.curry(first)
 utils.trace  = ram.curry(trace)
+
 

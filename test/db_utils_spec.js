@@ -3,7 +3,7 @@
 let expect = require('chai').expect
 
 let DB     = require('../db/db')
-let util   = require('../db/db_utils')
+let util   = require('../server/server_utils')
 let ram    = require('ramda')
 
 describe('DB utility functions', function() {
@@ -12,30 +12,34 @@ describe('DB utility functions', function() {
     c_id:    1,
     profile: { name: 'Dnin', age: 51, history: 'stringy stringy' },
     stats:   { hp: 32, prof: 3, level: 6 },
-    items:   [ { _id: 237, name: 'Gold', value: 1, quant: 89 },
-               { _id: 181, name: 'Potion', value: 12, quant: 2 }]
+    items:   [ { id: 237, name: 'Gold', value: 1, quant: 89 },
+               { id: 181, name: 'Potion', value: 12, quant: 2 }]
   }
   const Dangah = {
     c_id:    2,
     profile: { name: 'Dangah', age: 43, history: 'flingy thingy' },
     stats:   { hp: 72, prof: 4, level: 13 },
-    items:   [ { _id: 237, name: 'Gold', value: 1, quant: 163 },
-               { _id: 181, name: 'Potion', value: 12, quant: 3 }]
+    items:   [ { id: 237, name: 'Gold', value: 1, quant: 163 },
+               { id: 181, name: 'Potion', value: 12, quant: 3 }]
   }
   const characters  = [Dnin, Dangah]
 
+  const all         = () => true
   const stats       = util.by('stats')
-  const charName    = ram.compose( util.by('name'), util.by('profile') )
-  const charHP      = ram.compose( util.by('hp'), util.by('stats') )
+  const profile     = util.by('profile')
+  const charName    = ram.compose( util.by('name'), profile )
+  const charHP      = ram.compose( util.by('hp'), stats )
 
-  const partyNames  = ram.compose(ram.map(charName))
+  const nameMatch   = ram.curry( (name, character) => charName(character) === name )
+  const byName      = (name) => util.where(nameMatch(name))
+
+  const partyNames  = ram.map(charName)
   const partyHealth = ram.compose(ram.sum, ram.map(charHP))
 
   const notDead     = (character) => charHP(character) >= 0
   const aliveOnes   = util.where(notDead, characters)
 
-  const isDnin      = (character) => charName(character) === 'Dnin'
-  const findDnin    = util.where(isDnin)
+  const findDnin    = byName('Dnin')
 
   describe('by', function() {
     /*
@@ -81,7 +85,7 @@ describe('DB utility functions', function() {
     })
 
     // it ('should map multiple args', function() {
-    //   const cIdProfile = ram.map( util.by('c_id'), util.by('profile') )
+    //   const cIdProfile = ram.map( util.by('cid'), util.by('profile') )
 
     //   console.log('cIdProfile dnin:', cIdProfile(Dnin))
     // })
@@ -90,7 +94,7 @@ describe('DB utility functions', function() {
 
   describe('update', function() {
     it ('should update the value of an object', function() {
-      let ricky = { name: 'Rickshaw' }
+      const ricky = { name: 'Rickshaw' }
       util.update('name', 'Randy', ricky)
 
       expect(ricky).to.deep.equal({ name: 'Randy' })
@@ -99,14 +103,56 @@ describe('DB utility functions', function() {
       } catch (e) { expect(e).to.be.ok }
     })
 
-    it.only('should work well with other utilities', function() {
-      let charDnin = findDnin(characters)[0]
-      console.log('dnin:', charDnin)
+    it('should work well with other utilities', function() {
+      const charDnin = findDnin(characters)[0]
 
-      let dealDmg = ram.compose( util.update('hp', charHP(charDnin) - 6), stats)
+      const dealDmg = ram.compose( util.update('hp', charHP(charDnin) - 6), stats)
       dealDmg(charDnin)
 
       expect(charHP(charDnin)).to.equal(32 - 6)
+    })
+
+    it ('should compose well pt. 2', function() {
+      const isItem    = (itemId, item) => item.id === itemId
+
+      console.log('characters:', characters)
+      const party     = ram.map(util.where(all))(characters)
+      console.log('party:', party)
+      // const inventory = util.by('items')
+
+      // const findGold  = util.where(isItem(237), )
+      // const addGold   = util.update('gold')
+
+
+    })
+
+    // it ('should compose', function() {
+    //   // let givePartyGold = update, charactersInParty
+    // })
+  })
+
+  describe('insert', function() {
+    const Darinth = {
+      c_id: 3,
+      profile: { name: 'Darinth', age: 31, history: 'ting tang' },
+      stats:   { hp: 47, prof: 3, level: 6 },
+      items:   [ { id: 237, name: 'Gold', value: 1, quant: 89 },
+                 { id: 113, name: 'carrots', value: 0.25, quant: 37}]
+    }
+    const father = "bilo"
+
+    it ('should insert into an array', function() {
+      util.insert(Darinth, null, characters)
+      expect(characters.length).to.equal(3)
+    })
+
+    it ('should insert a property into an object', function() {
+      util.insert(father, 'father', Darinth.profile)
+
+      let dad = ram.compose(util.by('father'), profile, util.first, byName('Darinth'))
+          dad = dad(characters)
+
+      expect(dad).to.equal('bilo')
     })
 
 
