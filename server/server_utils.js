@@ -139,6 +139,7 @@ utils.remove = ram.curry(remove)
 utils.first  = ram.curry(first)
 utils.trace  = ram.curry(trace)
 
-
-
+// TODO
+// curry all properties of utils.
+// ram.mapObjIndexed( (val) => ram.curry(val), utils);
 
