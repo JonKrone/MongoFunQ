@@ -1,10 +1,9 @@
-"use strict"
+'use strict'
 
+let ram    = require('ramda')
 let expect = require('chai').expect
 
-let DB     = require('../db/db')
-let util   = require('../server/server_utils')
-let ram    = require('ramda')
+let util   = require('../lib/utils')
 
 describe('DB utility functions', function() {
 
